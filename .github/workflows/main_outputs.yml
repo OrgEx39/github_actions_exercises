@@ -1,0 +1,31 @@
+name: Main Outputs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  consumir:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Mostrar ruta del ZIP
+        env:
+          ZIP_PATH: ${{ needs.build.outputs.zip_path }}
+        run: echo "ZIP generado en $ZIP_PATH"
+
+      - name: Descargar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-zip
+          path: ./downloads
+
+      - name: Comprobar ZIP
+        env:
+          ZIP_PATH: ${{ needs.build.outputs.zip_path }}
+        run: |
+          ls -l downloads
+          unzip -l "downloads/$ZIP_PATH"

@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  workflow_call:
+    outputs:
+      zip_path:
+        description: "Ruta del archivo ZIP"
+        value: ${{ jobs.build.outputs.zip_path }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      zip_path: ${{ steps.zip.outputs.zip_path }}
+
+    steps:
+      - name: Crear archivos
+        run: |
+          mkdir -p dist
+          pwd
+          echo "Aplicación de ejemplo" > dist/app.txt
+
+      - name: Crear ZIP
+        id: zip
+        run: |
+          cd dist
+          zip ../app.zip app.txt
+          echo "zip_path=app.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Subir artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-zip
+          path: app.zip

@@ -1,7 +1,7 @@
-name: Workflow principal
+name: Caller Workflow
 
 on:
-  workflow_dispatch:
+  push:
 
 jobs:
   llamar-reusable:
