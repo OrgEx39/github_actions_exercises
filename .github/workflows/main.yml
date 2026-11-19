@@ -1,0 +1,15 @@
+name: Workflow principal
+
+on:
+  workflow_dispatch:
+
+jobs:
+  llamar-reusable:
+    uses: ./.github/workflows/reusable.yml
+
+    with:
+      environment: production
+      version: "2.5.0"
+
+    secrets:
+      API_TOKEN: ${{ secrets.MY_API_TOKEN }}

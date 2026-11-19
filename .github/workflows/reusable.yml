@@ -1,0 +1,42 @@
+name: Workflow reutilizable
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Entorno de despliegue"
+        required: true
+        type: string
+
+      version:
+        description: "Versión de la aplicación"
+        required: false
+        type: string
+        default: "1.0.0"
+
+    secrets:
+      API_TOKEN:
+        description: "Token de acceso"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Mostrar parámetros
+        run: |
+          echo "Entorno: $ENVIRONMENT"
+          echo "Versión: $VERSION"
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          VERSION: ${{ inputs.version }}
+
+      - name: Utilizar secreto
+        env:
+          TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          echo "El token se ha recibido"
+          if [ -n "$TOKEN" ]; then
+            echo "Token disponible"
+          fi
