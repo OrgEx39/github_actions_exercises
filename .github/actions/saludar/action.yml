@@ -1,0 +1,14 @@
+name: Saludar
+description: Acción Docker que saluda a una persona
+
+inputs:
+  nombre:
+    description: Nombre de la persona
+    required: true
+
+runs:
+  using: docker
+  image: Dockerfile
+  entrypoint: /entrypoint.sh
+  args:
+    - ${{ inputs.nombre }}

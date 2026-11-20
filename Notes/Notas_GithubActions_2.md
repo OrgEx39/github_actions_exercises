@@ -35,6 +35,8 @@ Las acciones post se ejecutan en orden inverso al de registro (LIFO): la última
 
 [List of DEFAULT environment variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)
 
+> $GITHUB_REF is only evaluated once the job is on the runner.
+
 # Defining environment variables for a single workflow
 
 ```yaml
@@ -237,6 +239,8 @@ When you enable GitHub Actions, GitHub installs a GitHub App on your repository.
 
 > `workflow_dispatch` and `repository_dispatch` events AND pull_request events with the `opened`, `synchronize`, or `reopened` activity types always create workflow runs.
 
+> Its permissions are limited to the repository that contains the workflow.
+
 # ``github.context``
 
 The github context contains information about the workflow run and the event that triggered the run.
@@ -411,6 +415,12 @@ jobs:
 * Runner Groups: controlan qué repositorios pueden utilizar determinados runners. 
 * Runner Labels: permiten seleccionar qué runners cumplen las características que necesita un job.
 
+````yaml
+runs-on:
+      group: ubuntu-runners
+      labels: ubuntu-24.04-16core
+````
+
 # ¿Qué instrucciones puedes enviar mediante workflow commands?
 
 |          Comando         |                           Función                           |
@@ -425,12 +435,48 @@ jobs:
 | $GITHUB_OUTPUT           | Publicar outputs de un step.                                |
 | $GITHUB_PATH             | Añadir directorios al PATH de los siguientes steps.         |
 
+# Service containers
+
+- services: → declara los contenedores auxiliares.
+- Se crean al preparar el job.
+- Están disponibles para sus steps.
+- Se eliminan al finalizar el job.
+- Cada job dispone de sus propios service containers.
+  La idea principal: un Service Container es un servicio temporal que vive lo mismo que el job que lo necesita.
+
+# Y esta pregunta??
+
+Suppose a workflow uses GITHUB_TOKEN to push a commit or update a pull request. Which two events will not start a new workflow run as a result? (select two)
+
+Tu selección es incorrecta
+repository_dispatch
+
+Explicación
+Incorrect. repository_dispatch explicitly allows triggering from external events.
+
+Selección correcta
+push
+
+Explicación
+Correct. Push events caused by GITHUB_TOKEN do not trigger new workflow runs to avoid recursion.
+Selección correcta
+pull_request
+
+Explicación
+Correct. Pull request events caused by GITHUB_TOKEN also do not trigger new runs.
+Tu selección es incorrecta
+workflow_dispatch
+
+Explicación
+Incorrect. workflow_dispatch explicitly allows manual triggering.
+
+
 # Check later urls
 
 * [GITHUB_TOKEN](https://docs.github.com/en/actions/concepts/security/github_token)
 * [Available contexts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)
 * [Time limits](https://docs.github.com/en/actions/reference/limits)
-
+* [Available contexts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)
 
 * [Repo with more resources](https://github.com/LautaroOrellano/actions-certification-guide/)
 
