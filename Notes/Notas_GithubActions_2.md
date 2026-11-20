@@ -35,6 +35,8 @@ Las acciones post se ejecutan en orden inverso al de registro (LIFO): la última
 
 [List of DEFAULT environment variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)
 
+> $GITHUB_REF is only evaluated once the job is on the runner.
+
 # Defining environment variables for a single workflow
 
 ```yaml
@@ -230,12 +232,26 @@ If a cache key contains the dependencies file wrapped in hashFiles, the key chan
     key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
 ```
 
+````yaml
+- name: Cache Node.js modules
+  uses: actions/cache@v4
+  with:
+    path: ~/.npm
+    key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+    restore-keys: |
+      ${{ runner.os }}-npm-
+````
+
 # About the `GITHUB_TOKEN`
 At the start of each workflow job, GitHub automatically creates a unique `GITHUB_TOKEN` secret to use in your workflow. You can use the GITHUB_TOKEN to authenticate in the workflow job.
 
 When you enable GitHub Actions, GitHub installs a GitHub App on your repository. The `GITHUB_TOKEN` secret is a GitHub App installation access token. You can use the installation access token to authenticate on behalf of the GitHub App installed on your repository. The token's permissions are limited to the repository that contains your workflow.
 
 > `workflow_dispatch` and `repository_dispatch` events AND pull_request events with the `opened`, `synchronize`, or `reopened` activity types always create workflow runs.
+
+> Its permissions are limited to the repository that contains the workflow.
+
+> GITHUB_TOKEN expires when the job finishes or after 24 hours. 
 
 # ``github.context``
 
@@ -406,10 +422,27 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ````
 
+## Tabla resumen
+
+|  Permiso |                               Descripción                              |
+|:--------:|:----------------------------------------------------------------------:|
+| Read     | Consultar código, issues y pull requests.                              |
+| Triage   | Gestionar issues y pull requests sin modificar código.                 |
+| Write    | Escribir código y gestionar ejecuciones de workflows.                  |
+| Maintain | Gestionar el repositorio sin acceso a determinadas acciones sensibles. |
+| Admin    | Control administrativo completo sobre el repositorio.                  |
+| Owner    | Control sobre la organización, incluidos sus repositorios y miembros.  |
+
 #  Self hosted runners groups and labels
 
 * Runner Groups: controlan qué repositorios pueden utilizar determinados runners. 
 * Runner Labels: permiten seleccionar qué runners cumplen las características que necesita un job.
+
+````yaml
+runs-on:
+      group: ubuntu-runners
+      labels: ubuntu-24.04-16core
+````
 
 # ¿Qué instrucciones puedes enviar mediante workflow commands?
 
@@ -425,11 +458,49 @@ jobs:
 | $GITHUB_OUTPUT           | Publicar outputs de un step.                                |
 | $GITHUB_PATH             | Añadir directorios al PATH de los siguientes steps.         |
 
+# Service containers
+
+- services: → declara los contenedores auxiliares.
+- Se crean al preparar el job.
+- Están disponibles para sus steps.
+- Se eliminan al finalizar el job.
+- Cada job dispone de sus propios service containers.
+  La idea principal: un Service Container es un servicio temporal que vive lo mismo que el job que lo necesita.
+
+# Y esta pregunta??
+
+Suppose a workflow uses GITHUB_TOKEN to push a commit or update a pull request. Which two events will not start a new workflow run as a result? (select two)
+
+Tu selección es incorrecta
+repository_dispatch
+
+Explicación
+Incorrect. repository_dispatch explicitly allows triggering from external events.
+
+Selección correcta
+push
+
+Explicación
+Correct. Push events caused by GITHUB_TOKEN do not trigger new workflow runs to avoid recursion.
+Selección correcta
+pull_request
+
+Explicación
+Correct. Pull request events caused by GITHUB_TOKEN also do not trigger new runs.
+Tu selección es incorrecta
+workflow_dispatch
+
+Explicación
+Incorrect. workflow_dispatch explicitly allows manual triggering.
+
+
 # Check later urls
 
 * [GITHUB_TOKEN](https://docs.github.com/en/actions/concepts/security/github_token)
 * [Available contexts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)
 * [Time limits](https://docs.github.com/en/actions/reference/limits)
+* [Available contexts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)
+* Schedule con ``cron``
 
 
 * [Repo with more resources](https://github.com/LautaroOrellano/actions-certification-guide/)
@@ -442,3 +513,77 @@ jobs:
       path: my_file.txt
       retention-days: 5
 ```
+
+# Descargar un artifact de otro workflow run del mismo repositorio
+
+````yaml
+permissions:
+  actions: read
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: application
+          path: ./downloads
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 123456789
+````
+
+# Descargar un artifact de otro repositorio
+
+````yaml
+- name: Download artifact
+  uses: actions/download-artifact@v4
+  with:
+    name: application
+    path: ./downloads
+    github-token: ${{ secrets.MY_PAT }}
+    repository: my-org/my-repository
+    run-id: 123456789
+````
+
+* GitHub Secrets have a maximum size limit of 48 KB. For larger secrets, the recommended approach is to encrypt the file externally (for example, using GPG or OpenSSL) and commit the encrypted version to your repository or store it in secure external storage. Then, you store only the decryption key or passphrase in GitHub Secrets. This way, the sensitive data can still be accessed during workflow execution without exceeding GitHub’s size limits.
+
+# Campos potencialmente no confiables según GitHub
+
+|      Campo     |       Ejemplo de contenido       |
+|:--------------:|:--------------------------------:|
+| body           | Contenido de una issue o PR      |
+| default_branch | Nombre de la rama predeterminada |
+| email          | Correo electrónico               |
+| head_ref       | Rama de origen de una PR         |
+| label          | Etiqueta                         |
+| message        | Mensaje de un commit             |
+| name           | Nombre de un recurso             |
+| page_name      | Nombre de una página             |
+| ref            | Referencia Git                   |
+| title          | Título de una issue o PR         |
+
+## Ejemplo con head_ref
+
+### Vulnerable:
+
+```yaml
+- name: Show source branch
+  run: |
+    echo "${{ github.head_ref }}"
+```
+
+### Seguro frente a la inyección directa:
+
+```yaml
+- name: Show source branch
+  env:
+    BRANCH: ${{ github.head_ref }}
+  run: |
+    echo "$BRANCH"
+```
+
+# API REST de Github para interactuar con flujos de trabajo
+
+https://docs.github.com/es/rest/actions/workflow
