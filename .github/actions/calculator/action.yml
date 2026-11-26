@@ -1,0 +1,30 @@
+name: Calculator
+description: Add two numbers
+
+inputs:
+  number1:
+    description: First number
+    required: true
+
+  number2:
+    description: Second number
+    required: true
+
+outputs:
+  result:
+    description: Sum of the numbers
+    value: ${{ steps.make-result.outputs.result }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Calculate result
+      id: make-result
+      shell: bash
+      env:
+        NUMBER1: ${{ inputs.number1 }}
+        NUMBER2: ${{ inputs.number2 }}
+      run: |
+        result=$((NUMBER1 + NUMBER2))
+        echo "result=$result" >> "$GITHUB_OUTPUT"

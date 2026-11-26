@@ -401,6 +401,17 @@ jobs:
         run: gh run download 123456789 --name aplicacion
 ```
 
+|                  Operación                  |        Permiso de GITHUB_TOKEN        |
+|:-------------------------------------------:|:-------------------------------------:|
+| Subir un artifact con upload-artifact       | Ninguno                               |
+| Descargar un artifact de la misma ejecución | Ninguno                               |
+| Descargar un artifact de otra ejecución     | actions: read                         |
+| Listar artifacts mediante REST API          | actions: read                         |
+| Eliminar artifacts mediante REST API        | actions: write                        |
+| Clonar el repositorio con checkout          | contents: read                        |
+| Publicar paquetes en GitHub Packages        | packages: write                       |
+| Generar artifact attestations               | attestations: write e id-token: write |
+
 ## ``GITBUB_TOKEN``
 
 ````yaml
@@ -422,6 +433,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ````
 
+## API REST de Github permissions
+
+https://docs.github.com/en/rest/actions/permissions
+
 ## Tabla resumen
 
 |  Permiso |                               Descripción                              |
@@ -432,6 +447,7 @@ jobs:
 | Maintain | Gestionar el repositorio sin acceso a determinadas acciones sensibles. |
 | Admin    | Control administrativo completo sobre el repositorio.                  |
 | Owner    | Control sobre la organización, incluidos sus repositorios y miembros.  |
+
 
 #  Self hosted runners groups and labels
 
@@ -587,3 +603,7 @@ jobs:
 # API REST de Github para interactuar con flujos de trabajo
 
 https://docs.github.com/es/rest/actions/workflow
+
+# Versions
+
+To manage breaking changes in our GitHub Action, we are adopting Semantic Versioning (SemVer). This means when we introduce changes that are not backward-compatible, we release a new major version. For example, if the current version is v1.x.x and a breaking change is made, we will release v2.0.0. This ensures that existing workflows continue to function without disruption, as they will still reference the v1 tag unless explicitly updated. By tagging the new release with v2.0.0 and providing a v2 reference, teams can easily upgrade to the latest compatible version while maintaining clarity and control over their workflows. This approach minimizes risk and provides a clear upgrade path.

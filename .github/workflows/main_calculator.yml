@@ -1,0 +1,20 @@
+name: Test Calculator
+
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Execute calculator
+        id: calculator
+        uses: ./.github/actions/calculator
+        with:
+          number1: 10
+          number2: 20
+
+      - name: Show result
+        run: echo "${{ steps.calculator.outputs.result }}"

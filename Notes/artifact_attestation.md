@@ -92,7 +92,7 @@ GitHub Docs
 
 Por ejemplo, para un proyecto Maven que genera un JAR:
 
-```
+``` yaml
 name: Build con attestation
 
 on:
@@ -130,7 +130,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: aplicacion
-          path: target/*.jar
+          path: target/*.jar #Wildcards or directories can be specified.
 ```
 
 Fíjate en los permisos:
