@@ -1,0 +1,8 @@
+name: My Docker Action
+description: Show environment variables
+
+runs:
+  using: docker
+  image: Dockerfile
+  env:
+    INTERNAL_VAR: "Docker internal value"
